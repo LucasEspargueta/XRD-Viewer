@@ -31,3 +31,4 @@ A Python-based GUI application for visualizing and analyzing X-ray diffraction (
 - Required Packages:
   ```bash
   pip install pymatgen matplotlib numpy
+- Note: You may also need to install **Microsoft Visual C++ 14.0 or greater** to use pymatgen.
