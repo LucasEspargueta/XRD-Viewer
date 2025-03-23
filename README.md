@@ -1,6 +1,6 @@
 # XRD Viewer Free
 
-A Python-based GUI application for visualizing and analyzing X-ray diffraction (XRD) patterns from CIF files, with advanced features for accurate pattern calculation and 3D structure visualization (soon).
+A Python-based GUI application for visualizing and analyzing X-ray diffraction (XRD) patterns from CIF files, with advanced features for accurate pattern calculation.
 
 ![XRD Viewer Screenshot](image.png)
 
@@ -18,7 +18,6 @@ A Python-based GUI application for visualizing and analyzing X-ray diffraction (
 
 - **Advanced Features**
   - Customizable experimental parameters
-  - Integrated 3D structure visualization (soon)
   - Framework for Rietveld refinement integration
 
 - **File Management**

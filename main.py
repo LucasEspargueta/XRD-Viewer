@@ -20,13 +20,26 @@ class PowderDiffractionViewer:
         self.spectra = {}
         self.wavelength = 1.5406  # Cu K-alpha
         self.sigma = 0.04  # Peak broadening (degrees)
-        self.theta_range = [10, 90]
-        self.step = 0.02
+        self.theta_range = [10, 90] #2theta range
+        self.step = 0.02 
         
-        # Create GUI components
         self.create_widgets()
         self.setup_plot()
         
+        self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        
+    def on_motion(self, event):
+        """Handle mouse motion events to show x, y values"""
+        if event.inaxes == self.ax:
+            x = event.xdata
+            y = event.ydata
+            self.annotation.xy = (x, y)
+            self.annotation.set_text(f"2θ: {x:.2f}°\nIntensity: {y:.3f}")
+            self.annotation.set_visible(True)
+        else:
+            self.annotation.set_visible(False)
+        self.canvas.draw_idle()
+
     def view_3d_structure(self):
         selected = self.file_list.curselection()
         if not selected:
@@ -35,19 +48,18 @@ class PowderDiffractionViewer:
     
         try:
             cif_path = self.files[selected[0]]
-            subprocess.Popen(["python", "crystal_3d_viewer.py", cif_path])
+            subprocess.Popen(["python", "fast_3d_viewer.py", cif_path])
         except Exception as e:
-            messagebox.showerror("Error", f"3D visualization failed:\n{str(e)}")    
+            messagebox.showerror("Error", f"3D visualization failed:\n{str(e)}") 
+            print(e)   
         
     def create_widgets(self):
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Control panel
         control_frame = ttk.LabelFrame(main_frame, text="Controls", padding=10)
         control_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
         
-        # Range settings
         range_frame = ttk.LabelFrame(control_frame, text="2θ Range Settings", padding=5)
         range_frame.pack(fill=tk.X, pady=5)
         
@@ -69,7 +81,6 @@ class PowderDiffractionViewer:
         ttk.Button(range_frame, text="Apply Range", 
                  command=self.update_theta_range).grid(row=3, column=0, columnspan=2, pady=5)
         
-        # File management
         file_frame = ttk.LabelFrame(control_frame, text="CIF Files", padding=5)
         file_frame.pack(fill=tk.X, pady=5)
         
@@ -83,7 +94,6 @@ class PowderDiffractionViewer:
         ttk.Button(btn_frame, text="Remove Selected", command=self.remove_selected_files).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
         ttk.Button(btn_frame, text="Clear All", command=self.clear_files).pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        # Plot area
         plot_frame = ttk.Frame(main_frame)
         plot_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
@@ -93,23 +103,30 @@ class PowderDiffractionViewer:
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
-        # Toolbar with checkboxes
         self.toolbar = ttk.Frame(plot_frame)
         self.toolbar.pack(side=tk.BOTTOM, fill=tk.X)
         
         advanced_btn = ttk.Button(self.toolbar, text="Advanced Settings",
                                 command=self.show_advanced_settings)
-        advanced_btn.pack(side=tk.RIGHT, padx=5)
+        advanced_btn.pack(side=tk.RIGHT, padx=5)        
         
-        # 3D structure button
-        #ttk.Button(btn_frame, text="View 3D Structure", 
-        #  command=self.view_3d_structure).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
         
     def setup_plot(self):
         self.ax.set_xlabel("2θ (degrees)", fontsize=12)
         self.ax.set_ylabel("Intensity (a.u.)", fontsize=12)
         self.ax.grid(True, alpha=0.3)
         self.fig.tight_layout()
+    
+        # Set y-axis ticks and limits
+        self.ax.set_yticks(np.arange(0, 1.1, 0.1))
+        self.ax.set_ylim(0, 1.1)
+
+        self.annotation = self.ax.annotate(
+            "", xy=(0,0), xytext=(20,20), textcoords="offset points",
+            bbox=dict(boxstyle="round", fc="w", alpha=0.9),
+            arrowprops=dict(arrowstyle="->")
+        )
+        self.annotation.set_visible(False)
         
     def show_advanced_settings(self):
         """Dialog for advanced parameters"""
@@ -156,7 +173,6 @@ class PowderDiffractionViewer:
             self.theta_range = [new_start, new_end]
             self.step = new_step
             
-            # Reprocess all files with new settings
             if self.files:
                 current_files = self.files.copy()
                 self.clear_files()
@@ -185,11 +201,9 @@ class PowderDiffractionViewer:
     def remove_selected_files(self):
         selected = self.file_list.curselection()
         if selected:
-            # Remove in reverse order to preserve indices
             for idx in reversed(selected):
                 path = self.files[idx]
                 if path in self.spectra:
-                    # Remove checkbox
                     self.spectra[path]['checkbox'].destroy()
                     del self.spectra[path]
                 del self.files[idx]
@@ -197,7 +211,6 @@ class PowderDiffractionViewer:
             self.redraw_plot()
             
     def clear_files(self):
-        # Destroy all checkboxes and clear data
         for path in list(self.spectra.keys()):
             self.spectra[path]['checkbox'].destroy()
             del self.spectra[path]
@@ -294,7 +307,7 @@ class PowderDiffractionViewer:
         
     def update_plot(self):
         self.ax.relim()
-        self.ax.autoscale_view()
+        self.ax.autoscale_view(scalex=True, scaley=False)  
         self.canvas.draw()
 
 if __name__ == "__main__":
